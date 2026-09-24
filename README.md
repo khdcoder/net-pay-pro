@@ -20,12 +20,12 @@
 Whether you operate in bustling urban sectors or rural villages (*Chaks, Mohallahs, Dhoks*) with intermittent internet connectivity, **NetPay Pro works 100% offline**. All records are saved securely in your browser's persistent storage engine, with automatic background synchronization to your personal Google Drive / Google Sheets whenever an internet connection is detected.
 
 ---
+<img width="1366" height="768" alt="Screenshot (84)" src="https://github.com/user-attachments/assets/ae9852ad-39c7-4629-b8d6-f387383c09fd" />
 <img width="1366" height="768" alt="Screenshot (89)" src="https://github.com/user-attachments/assets/5774a4d6-8a04-4172-887b-303f445e494f" />
 <img width="1366" height="768" alt="Screenshot (88)" src="https://github.com/user-attachments/assets/fd0bd6a6-b76c-4ab3-beeb-10d2f7b705ac" />
 <img width="1366" height="768" alt="Screenshot (87)" src="https://github.com/user-attachments/assets/87ee8df8-c05c-438d-8283-8cfb78d6ddc0" />
 <img width="1366" height="768" alt="Screenshot (86)" src="https://github.com/user-attachments/assets/7686949a-2355-4c5a-8b8d-2b81b78be3db" />
 <img width="1366" height="768" alt="Screenshot (85)" src="https://github.com/user-attachments/assets/c7af2704-f671-4f87-9fb0-f5d5edc2e507" />
-<img width="1366" height="768" alt="Screenshot (84)" src="https://github.com/user-attachments/assets/ae9852ad-39c7-4629-b8d6-f387383c09fd" />
 
 ## ✨ Key Features
 
