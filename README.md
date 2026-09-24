@@ -1,4 +1,4 @@
-# NetPay Pro - Modern Billing & Financial Management System
+# NetPay Pro 🚀
 
 > **Modern, Offline-First ISP & Cable TV Bill Collection and Subscriber Management System**  
 > Developed with ❤️ by **Khalid Software House** | GitHub: [@khdcoder](https://github.com/khdcoder)  
@@ -20,12 +20,6 @@
 Whether you operate in bustling urban sectors or rural villages (*Chaks, Mohallahs, Dhoks*) with intermittent internet connectivity, **NetPay Pro works 100% offline**. All records are saved securely in your browser's persistent storage engine, with automatic background synchronization to your personal Google Drive / Google Sheets whenever an internet connection is detected.
 
 ---
-<img width="1366" height="768" alt="Screenshot (85)" src="https://github.com/user-attachments/assets/7257d359-f349-4f3e-a393-5f12c165dd53" />
-<img width="1366" height="768" alt="Screenshot (84)" src="https://github.com/user-attachments/assets/79af6ac5-56f0-4cf0-9207-f1fded5f646d" />
-<img width="1366" height="768" alt="Screenshot (88)" src="https://github.com/user-attachments/assets/f0cd8b19-5496-47b8-adae-13887a6d83f3" />
-<img width="1366" height="768" alt="Screenshot (86)" src="https://github.com/user-attachments/assets/0a65f22d-117c-4d10-bd38-fb0a1e50bd14" />
-
-<img width="1366" height="768" alt="Screenshot (87)" src="https://github.com/user-attachments/assets/301c7d11-6f59-457e-bf72-9fc3e73feca6" />
 
 ## ✨ Key Features
 
@@ -63,8 +57,8 @@ Whether you operate in bustling urban sectors or rural villages (*Chaks, Mohalla
 ### 7. ☁️ Google Cloud & Google Drive Backup
 - Connect your own free Google Apps Script webhook to automatically back up encrypted snapshot archives to your private Google Drive.
 
-### 8. 🧪 50 Realistic Mock Subscribers Pre-Loaded
-- Ready to explore immediately! Comes with 50 pre-populated subscribers with realistic names, Pakistani mobile numbers, addresses, and multi-month billing histories across Internet and Cable TV tiers.
+### 8. 🚀 Clean Fresh Start (Production-Ready)
+- Starts with a completely clean database (0 records) ready for immediate deployment. You can add your real customers immediately or use the optional **"Load 50 Sample Users"** tool under Settings if you want to explore with sample data first.
 
 ---
 

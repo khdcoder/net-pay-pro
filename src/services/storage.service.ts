@@ -7,8 +7,8 @@ import { UtilityService } from './utility.service';
 import { MOCK_USERS, generateMockBillEntries } from '../models/mock-data';
 
 const DEFAULT_DATA: AppData = {
-  users: MOCK_USERS,
-  billEntries: generateMockBillEntries(MOCK_USERS),
+  users: [],
+  billEntries: [],
   settings: {
     appsScriptUrl: 'https://script.google.com/macros/s/AKfycbzTt-uNDTUWBHEc2RykXsmSih1n9lnl7-etUnkC66J0w9vEjHsSm1FhbfYyudvA09rl/exec',
     userEmail: null,
@@ -69,8 +69,18 @@ export class StorageService {
       // Check if localStorage was completely empty (e.g. after clearing Chrome history/data)
       const current = this._appData();
       if (current.users.length === 0 && current.billEntries.length === 0) {
-        console.log('[StorageService] LocalStorage is empty. Checking IndexedDB for persistent backup...');
         const idbData = await this.indexedDbService.loadAppData();
+        const hasMockData = idbData?.users?.some((u: any) => 
+          u.phone === '00000000000' || 
+          u.name === 'Arthur Pendelton' || 
+          (u.name && u.name.startsWith('Demo User')) || 
+          (u.name && u.name.startsWith('Demo Subscriber'))
+        );
+        if (hasMockData) {
+          await this.indexedDbService.saveAppData(current);
+          return;
+        }
+
         if (idbData && (idbData.users?.length > 0 || idbData.billEntries?.length > 0)) {
           console.log('[StorageService] Recovered data from IndexedDB!', idbData.users.length, 'users');
           this.loadCompleteData(idbData);
@@ -80,9 +90,14 @@ export class StorageService {
 
         // If current state wasn't found in idb, check newest snapshot
         if (snapshots.length > 0 && snapshots[0].data) {
-          console.log('[StorageService] Recovered data from latest snapshot:', snapshots[0].date);
-          this.loadCompleteData(snapshots[0].data);
-          this.utilityService.showNotification(`Data restored from automatic snapshot (${snapshots[0].date})!`, 'success');
+          const snapshotHasMock = snapshots[0].data.users?.some((u: any) => 
+            u.phone === '00000000000' || (u.name && u.name.startsWith('Demo User'))
+          );
+          if (!snapshotHasMock && snapshots[0].data.users?.length > 0) {
+            console.log('[StorageService] Recovered data from latest snapshot:', snapshots[0].date);
+            this.loadCompleteData(snapshots[0].data);
+            this.utilityService.showNotification(`Data restored from automatic snapshot (${snapshots[0].date})!`, 'success');
+          }
         }
       } else {
         // We have active data, sync it to IndexedDB right away
@@ -103,9 +118,18 @@ export class StorageService {
         const parsedData = JSON.parse(data);
         // Ensure settings are complete
         parsedData.settings = { ...DEFAULT_DATA.settings, ...parsedData.settings };
-        if (!parsedData.users || parsedData.users.length === 0) {
-          parsedData.users = MOCK_USERS;
-          parsedData.billEntries = generateMockBillEntries(MOCK_USERS);
+        if (parsedData.users && parsedData.users.some((u: any) => 
+          u.phone === '00000000000' || 
+          u.name === 'Arthur Pendelton' || 
+          (u.name && u.name.startsWith('Demo User')) || 
+          (u.name && u.name.startsWith('Demo Subscriber')) || 
+          (u.phone && u.phone.includes('12345'))
+        )) {
+          parsedData.users = [];
+          parsedData.billEntries = [];
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(parsedData));
+          }
         }
         return parsedData;
       }
