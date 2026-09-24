@@ -1,0 +1,505 @@
+<div class="max-w-7xl mx-auto space-y-4 md:space-y-6">
+  <app-notification></app-notification>
+
+  <!-- Empty Data Recovery Banner (Displays if Chrome wiped local data, with close button) -->
+  @if (stats().totalUsers === 0 && !isRecoveryBannerDismissed()) {
+    <div class="p-4 md:p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl shadow-lg border border-indigo-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative">
+      <div class="space-y-1 pr-8 md:pr-0">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm font-bold border border-amber-500/30">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-sm md:text-base text-white">Browser Data Cleared or Records Missing?</h4>
+            <p class="text-[11px] text-slate-300">If your browser history or site data was cleared, you can instantly restore records from your Google Drive cloud backup or a local backup file.</p>
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 shrink-0">
+        <button 
+          type="button" 
+          (click)="quickRestoreFromCloud()"
+          class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 tap-active">
+          <i class="fas fa-cloud-download-alt"></i>
+          <span>Restore from Cloud</span>
+        </button>
+        <button 
+          type="button" 
+          (click)="triggerQuickImport()"
+          class="px-3 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold text-xs rounded-xl border border-white/20 transition-all flex items-center gap-1.5 tap-active">
+          <i class="fas fa-file-import"></i>
+          <span>Import Backup File</span>
+        </button>
+        <button 
+          type="button"
+          (click)="dismissRecoveryBanner()"
+          title="Dismiss notification"
+          class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors ml-1">
+          <i class="fas fa-times text-sm"></i>
+        </button>
+      </div>
+    </div>
+    <!-- Hidden quick import file input -->
+    <input 
+      type="file" 
+      id="dashboard-quick-import" 
+      class="hidden" 
+      accept=".json" 
+      (change)="handleQuickImport($event)">
+  }
+
+  <!-- ================= KPI STATS CARDS ================= -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
+    
+    <!-- Total Users -->
+    <div class="p-4 md:p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Users</p>
+          <p class="text-xl md:text-2xl font-black text-slate-900 dark:text-white mt-1">{{ stats().totalUsers }}</p>
+          <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">{{ stats().activeUsers }} Active</p>
+        </div>
+        <div class="w-11 h-11 md:w-12 md:h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg md:text-xl shrink-0 shadow-sm">
+          <i class="fas fa-users"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Collected -->
+    <div class="p-4 md:p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Collected</p>
+          <p class="text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">Rs. {{ stats().totalCollected | number:'1.0-0' }}</p>
+          <p class="text-[11px] text-slate-500 font-medium mt-0.5">{{ stats().collectionPercentage }}% Collected</p>
+        </div>
+        <div class="w-11 h-11 md:w-12 md:h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg md:text-xl shrink-0 shadow-sm">
+          <i class="fas fa-hand-holding-usd"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Billed -->
+    <div class="p-4 md:p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Billed</p>
+          <p class="text-xl md:text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-1">Rs. {{ stats().totalBilled | number:'1.0-0' }}</p>
+          <p class="text-[11px] text-slate-500 font-medium mt-0.5">{{ selectedPeriodLabel() }}</p>
+        </div>
+        <div class="w-11 h-11 md:w-12 md:h-12 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg md:text-xl shrink-0 shadow-sm">
+          <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Due -->
+    <div class="p-4 md:p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Due</p>
+          <p class="text-xl md:text-2xl font-black text-rose-600 dark:text-rose-400 mt-1">Rs. {{ stats().totalDue | number:'1.0-0' }}</p>
+          <p class="text-[11px] text-rose-500 dark:text-rose-400 font-medium mt-0.5">{{ statusCounts().notPaid + statusCounts().halfPaid }} Pending</p>
+        </div>
+        <div class="w-11 h-11 md:w-12 md:h-12 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-lg md:text-xl shrink-0 shadow-sm">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Collection Progress Bar -->
+  @if (stats().totalBilled > 0) {
+    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+      <div class="flex justify-between items-center text-xs font-semibold mb-2">
+        <span class="text-slate-600 dark:text-slate-300">Recovery Rate ({{ selectedPeriodLabel() }})</span>
+        <span class="text-indigo-600 dark:text-indigo-400 font-bold">{{ stats().collectionPercentage }}% Complete</span>
+      </div>
+      <div class="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
+        <div class="bg-emerald-500 h-full transition-all duration-500 rounded-full" [style.width.%]="stats().collectionPercentage"></div>
+      </div>
+    </div>
+  }
+
+  <!-- ================= CHART CARD ================= -->
+  <div class="p-4 md:p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+    <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
+      <div>
+        <h3 class="text-base md:text-lg font-bold text-slate-900 dark:text-white">Billed vs Collected ({{ selectedPeriodLabel() }})</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Financial trend for selected period</p>
+      </div>
+      <div class="flex items-center space-x-4 text-xs font-semibold">
+        <div class="flex items-center space-x-1.5">
+          <span class="w-3 h-3 rounded-sm bg-indigo-500"></span>
+          <span class="text-slate-600 dark:text-slate-300">Billed</span>
+        </div>
+        <div class="flex items-center space-x-1.5">
+          <span class="w-3 h-3 rounded-sm bg-emerald-500"></span>
+          <span class="text-slate-600 dark:text-slate-300">Collected</span>
+        </div>
+      </div>
+    </div>
+    <div #chart class="w-full overflow-x-auto"></div>
+  </div>
+
+  <!-- ================= MONTHLY BILLING DETAILS (DUAL VIEW) ================= -->
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+    
+    <!-- Filter & Action Header -->
+    <div class="p-4 md:p-5 border-b border-slate-100 dark:border-slate-800 space-y-4">
+      
+      <!-- Top Row: Title + Period Selectors -->
+      <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+        <div>
+          <h3 class="text-base md:text-lg font-bold text-slate-900 dark:text-white">Billing Records</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Showing {{ filteredBillEntries().length }} of {{ monthlyAllEntries().length }} records for {{ selectedPeriodLabel() }}
+          </p>
+        </div>
+
+        <!-- Period Selectors -->
+        <div class="flex items-center space-x-2">
+          <select 
+            [ngModel]="selectedMonth()" 
+            (ngModelChange)="selectedMonth.set(+$event); createChart()" 
+            class="p-2 text-xs md:text-sm font-semibold border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500">
+            <option [value]="0">Full Year (تمام سال)</option>
+            @for(month of months; track month.value){
+              <option [value]="month.value">{{ month.name }}</option>
+            }
+          </select>
+          <select 
+            [ngModel]="selectedYear()" 
+            (ngModelChange)="selectedYear.set(+$event); createChart()" 
+            class="p-2 text-xs md:text-sm font-semibold border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500">
+            @for(year of years; track year){
+              <option [value]="year">{{ year }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- Status Filter Tabs (Scrollable on mobile) -->
+      <div class="flex items-center space-x-2 overflow-x-auto pb-1 text-xs">
+        <button 
+          (click)="selectedStatus.set('All')" 
+          [class]="selectedStatus() === 'All' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors flex items-center space-x-1.5">
+          <span>All</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[10px]" [class]="selectedStatus() === 'All' ? 'bg-indigo-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'">
+            {{ statusCounts().all }}
+          </span>
+        </button>
+
+        <button 
+          (click)="selectedStatus.set('Paid')" 
+          [class]="selectedStatus() === 'Paid' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors flex items-center space-x-1.5">
+          <span>Paid</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[10px]" [class]="selectedStatus() === 'Paid' ? 'bg-emerald-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'">
+            {{ statusCounts().paid }}
+          </span>
+        </button>
+
+        <button 
+          (click)="selectedStatus.set('Not Paid')" 
+          [class]="selectedStatus() === 'Not Paid' ? 'bg-rose-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors flex items-center space-x-1.5">
+          <span>Not Paid</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[10px]" [class]="selectedStatus() === 'Not Paid' ? 'bg-rose-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'">
+            {{ statusCounts().notPaid }}
+          </span>
+        </button>
+
+        <button 
+          (click)="selectedStatus.set('Half Paid')" 
+          [class]="selectedStatus() === 'Half Paid' ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'"
+          class="px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-colors flex items-center space-x-1.5">
+          <span>Half Paid</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[10px]" [class]="selectedStatus() === 'Half Paid' ? 'bg-amber-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'">
+            {{ statusCounts().halfPaid }}
+          </span>
+        </button>
+      </div>
+
+      <!-- Search & Date Filter Row -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3">
+        <!-- Search Input -->
+        <div class="relative sm:col-span-2">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            <i class="fas fa-search text-xs"></i>
+          </div>
+          <input 
+            type="text" 
+            [ngModel]="searchTerm()" 
+            (ngModelChange)="searchTerm.set($event)" 
+            placeholder="Search customer name or address..." 
+            class="w-full py-2 pl-9 pr-8 text-xs md:text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          @if (searchTerm()) {
+            <button (click)="clearSearch()" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-rose-500">
+              <i class="fas fa-times text-xs"></i>
+            </button>
+          }
+        </div>
+
+        <!-- Date Filter -->
+        <div class="relative flex items-center">
+          <button 
+            type="button"
+            (click)="openDatePicker(datePickerInput)"
+            title="Open calendar"
+            class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer z-10 transition-colors">
+            <i class="fas fa-calendar-alt text-xs"></i>
+          </button>
+          <input 
+            #datePickerInput
+            id="dashboard-date-filter"
+            type="date" 
+            [ngModel]="selectedDate()" 
+            (ngModelChange)="selectedDate.set($event)"
+            (click)="openDatePicker(datePickerInput)"
+            title="Click anywhere to open calendar"
+            class="w-full py-2 pl-9 pr-8 text-xs md:text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+          @if(selectedDate()) {
+            <button 
+              type="button"
+              (click)="clearDateFilter(); $event.stopPropagation()" 
+              title="Clear date filter" 
+              class="absolute inset-y-0 right-0 px-2.5 flex items-center text-slate-400 hover:text-rose-500 z-10">
+              <i class="fas fa-times text-xs"></i>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Action Buttons Row -->
+      <div class="flex flex-wrap items-center gap-2 pt-1">
+        <button (click)="generateReport()" class="px-3.5 py-2 text-xs font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm flex items-center space-x-1.5 tap-active">
+          <i class="fas fa-file-pdf"></i>
+          <span>PDF Report</span>
+        </button>
+        <button (click)="exportCsv()" class="px-3.5 py-2 text-xs font-bold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm flex items-center space-x-1.5 tap-active">
+          <i class="fas fa-file-csv"></i>
+          <span>Export CSV</span>
+        </button>
+        <button (click)="sendWhatsAppReport()" class="px-3.5 py-2 text-xs font-bold text-white bg-teal-600 rounded-xl hover:bg-teal-700 transition-colors shadow-sm flex items-center space-x-1.5 tap-active">
+          <i class="fab fa-whatsapp"></i>
+          <span>Share WhatsApp</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ================= MOBILE VIEW: TOUCH CARDS (md:hidden) ================= -->
+    <div class="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+      @for(entry of filteredBillEntries(); track entry.id; let i = $index) {
+        <div class="p-4 space-y-3 bg-white dark:bg-slate-900 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+          
+          <!-- Top Row: Name, Category, Status -->
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold flex items-center justify-center text-sm shrink-0 border border-indigo-100 dark:border-indigo-900">
+                {{ entry.userName ? entry.userName.charAt(0).toUpperCase() : '#' }}
+              </div>
+              <div>
+                <div class="flex items-center space-x-1.5">
+                  <h4 class="font-bold text-sm text-slate-900 dark:text-white leading-snug">{{ entry.userName }}</h4>
+                  @if (selectedMonth() === 0) {
+                    <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200/50">
+                      {{ entry.monthName }}
+                    </span>
+                  }
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400 flex items-center space-x-1">
+                  <i class="fas fa-map-marker-alt text-[10px] text-slate-400"></i>
+                  <span class="truncate max-w-[180px]">{{ entry.userAddress }}</span>
+                </p>
+              </div>
+            </div>
+            
+            <span class="px-2.5 py-1 text-[11px] font-bold rounded-lg shrink-0" [class]="getStatusClass(entry.status)">
+              {{ entry.status }}
+            </span>
+          </div>
+
+          <!-- Middle Row: Financial Metrics (Bill, Paid, Due) -->
+          <div class="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-xs">
+            <div>
+              <p class="text-[10px] text-slate-400 font-semibold uppercase">Bill</p>
+              <p class="font-bold text-slate-800 dark:text-slate-200">Rs. {{ entry.billAmount | number:'1.0-0' }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-400 font-semibold uppercase">Paid</p>
+              <p class="font-bold text-emerald-600 dark:text-emerald-400">Rs. {{ entry.paidAmount | number:'1.0-0' }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-400 font-semibold uppercase">Due</p>
+              <p class="font-bold text-rose-600 dark:text-rose-400">Rs. {{ (entry.billAmount - entry.paidAmount) | number:'1.0-0' }}</p>
+            </div>
+          </div>
+
+          <!-- Bottom Row: Quick Actions (Collect & WhatsApp) -->
+          <div class="flex items-center justify-between pt-1 text-xs">
+            <span class="text-[11px] text-slate-400">
+              @if (entry.paymentDate) {
+                <i class="fas fa-check-circle text-emerald-500 mr-1"></i>{{ entry.paymentDate | date:'mediumDate' }}
+              } @else {
+                <i class="far fa-clock text-slate-400 mr-1"></i>Unpaid
+              }
+            </span>
+
+            <div class="flex items-center space-x-2">
+              @if (entry.userPhone) {
+                <button 
+                  (click)="sendSingleWhatsAppReminder(entry)" 
+                  class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 border border-emerald-200/60 dark:border-emerald-800/60 font-medium tap-active flex items-center space-x-1"
+                  title="WhatsApp Reminder">
+                  <i class="fab fa-whatsapp text-sm"></i>
+                </button>
+              }
+
+              @if (entry.status !== 'Paid') {
+                <button 
+                  (click)="quickCollect(entry)" 
+                  class="px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 shadow-sm tap-active flex items-center space-x-1.5">
+                  <i class="fas fa-hand-holding-usd"></i>
+                  <span>Collect</span>
+                </button>
+              }
+            </div>
+          </div>
+
+        </div>
+      } @empty {
+        <div class="p-8 text-center text-slate-400">
+          <i class="fas fa-inbox text-3xl mb-2 text-slate-300 dark:text-slate-600"></i>
+          <p class="text-sm font-medium">No records found for the selected criteria.</p>
+        </div>
+      }
+    </div>
+
+    <!-- ================= DESKTOP VIEW: FULL DATA TABLE (hidden md:block) ================= -->
+    <div class="hidden md:block overflow-x-auto">
+      <table class="w-full text-sm text-left text-slate-600 dark:text-slate-300">
+        <thead class="text-xs uppercase bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+          <tr>
+            <th scope="col" class="px-6 py-3.5 font-bold">#</th>
+            @if (selectedMonth() === 0) {
+              <th scope="col" class="px-4 py-3.5 font-bold">Month</th>
+            }
+            <th scope="col" class="px-6 py-3.5 font-bold">Customer Name</th>
+            <th scope="col" class="px-6 py-3.5 font-bold">Address</th>
+            <th scope="col" class="px-6 py-3.5 font-bold text-right">Monthly Bill</th>
+            <th scope="col" class="px-6 py-3.5 font-bold text-right">Paid Amount</th>
+            <th scope="col" class="px-6 py-3.5 font-bold text-center">Status</th>
+            <th scope="col" class="px-6 py-3.5 font-bold text-center">Payment Date</th>
+            <th scope="col" class="px-6 py-3.5 font-bold text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          @for(entry of filteredBillEntries(); track entry.id; let i = $index) {
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+              <td class="px-6 py-4 font-medium text-slate-400">{{ i + 1 }}</td>
+              @if (selectedMonth() === 0) {
+                <td class="px-4 py-4 font-bold text-indigo-600 dark:text-indigo-400 text-xs whitespace-nowrap">
+                  {{ entry.monthName }}
+                </td>
+              }
+              <td class="px-6 py-4 font-bold text-slate-900 dark:text-white">
+                <div class="flex items-center space-x-2">
+                  <span>{{ entry.userName }}</span>
+                  @if (entry.userCategory) {
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      {{ entry.userCategory }}
+                    </span>
+                  }
+                </div>
+              </td>
+              <td class="px-6 py-4 text-slate-500 dark:text-slate-400">{{ entry.userAddress }}</td>
+              <td class="px-6 py-4 text-right font-semibold text-slate-900 dark:text-white">Rs. {{ entry.billAmount | number:'1.2-2' }}</td>
+              <td class="px-6 py-4 text-right font-semibold text-emerald-600 dark:text-emerald-400">Rs. {{ entry.paidAmount | number:'1.2-2' }}</td>
+              <td class="px-6 py-4 text-center">
+                <span class="px-2.5 py-1 text-xs font-bold rounded-lg inline-block" [class]="getStatusClass(entry.status)">
+                  {{ entry.status }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-center text-xs text-slate-500 dark:text-slate-400">
+                {{ entry.paymentDate ? (entry.paymentDate | date:'mediumDate') : '-' }}
+              </td>
+              <td class="px-6 py-4 text-center">
+                <div class="flex items-center justify-center space-x-2">
+                  @if (entry.status !== 'Paid') {
+                    <button 
+                      (click)="quickCollect(entry)" 
+                      class="px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-1"
+                      title="Collect Bill">
+                      <i class="fas fa-hand-holding-usd"></i>
+                      <span>Collect</span>
+                    </button>
+                  }
+                  @if (entry.userPhone) {
+                    <button 
+                      (click)="sendSingleWhatsAppReminder(entry)" 
+                      class="p-1.5 text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 rounded-lg"
+                      title="Send WhatsApp Reminder">
+                      <i class="fab fa-whatsapp text-base"></i>
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="px-6 py-8 text-center text-slate-400">
+                <i class="fas fa-inbox text-3xl mb-2 text-slate-300 dark:text-slate-600 block"></i>
+                No records found for the selected criteria.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ================= WHATSAPP SHARE MODAL ================= -->
+  @if (isWhatsAppModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+      <div class="w-full max-w-md p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800">
+        <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100 dark:border-slate-800">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 flex items-center justify-center text-lg">
+              <i class="fab fa-whatsapp"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Send WhatsApp Summary</h3>
+          </div>
+          <button (click)="closeWhatsAppModal()" class="text-slate-400 hover:text-slate-600">
+            <i class="fas fa-times text-base"></i>
+          </button>
+        </div>
+
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+          Enter recipient phone number with country code (e.g. <strong>923001234567</strong> for Pakistan) to send the {{ selectedPeriodLabel() }} billing summary report.
+        </p>
+
+        <div>
+          <label for="whatsapp-number" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">WhatsApp Number</label>
+          <input 
+            id="whatsapp-number" 
+            type="tel" 
+            [ngModel]="whatsAppNumber()"
+            (ngModelChange)="whatsAppNumber.set($event)"
+            (keydown.enter)="confirmAndSendWhatsApp()"
+            placeholder="e.g. 923001234567"
+            class="w-full p-3 text-sm font-semibold border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500">
+        </div>
+
+        <div class="flex justify-end mt-6 space-x-2">
+          <button type="button" (click)="closeWhatsAppModal()" class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200">Cancel</button>
+          <button type="button" (click)="confirmAndSendWhatsApp()" class="px-5 py-2 text-xs font-bold text-white bg-teal-600 rounded-xl hover:bg-teal-700 shadow-sm flex items-center space-x-1.5">
+            <i class="fab fa-whatsapp"></i>
+            <span>Send via WhatsApp</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

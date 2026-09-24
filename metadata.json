@@ -1,0 +1,8 @@
+{
+  "name": "Remix Remix Remix Remix Remix NetPay Pro",
+  "description": "An offline-first bill collection and management application. Track users, manage monthly bills, generate reports, and sync your data to the cloud. Developed by Khalid Software House.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

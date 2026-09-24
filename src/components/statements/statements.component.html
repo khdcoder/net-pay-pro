@@ -1,0 +1,239 @@
+<div class="max-w-7xl mx-auto space-y-4 md:space-y-6">
+  <app-notification></app-notification>
+
+  <!-- Filters & User Selection Card -->
+  <div class="p-4 md:p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+    <div>
+      <h2 class="text-base md:text-lg font-bold text-slate-900 dark:text-white">Annual Customer Statement</h2>
+      <p class="text-xs text-slate-500 dark:text-slate-400">Search customer and pick year to generate payment ledger & export PDF/CSV</p>
+    </div>
+
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-12">
+      <!-- User Search Input -->
+      <div class="relative sm:col-span-8">
+        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Search Customer</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            <i class="fas fa-search text-xs"></i>
+          </div>
+          <input 
+            type="text" 
+            [ngModel]="searchQuery()" 
+            (ngModelChange)="searchQuery.set($event)" 
+            (input)="selectedUser.set(null)"
+            placeholder="Type customer name, address or phone..." 
+            class="w-full py-2.5 pl-9 pr-8 text-xs md:text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          
+          @if (searchQuery()) {
+             <button (click)="clearSelection()" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-rose-500">
+                <i class="fas fa-times text-xs"></i>
+            </button>
+          }
+        </div>
+
+        @if (searchResults().length > 0 && !selectedUser()) {
+          <ul class="absolute z-20 w-full mt-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-700 max-h-64 overflow-y-auto">
+            @for(user of searchResults(); track user.id) {
+              <li (click)="selectUser(user)" class="p-3 cursor-pointer hover:bg-indigo-50/80 dark:hover:bg-slate-700/80 flex items-center justify-between transition-colors">
+                <div>
+                  <p class="font-bold text-xs md:text-sm text-slate-900 dark:text-white">{{ user.name }}</p>
+                  <p class="text-[11px] text-slate-400">{{ user.address }}</p>
+                </div>
+                <div class="text-right">
+                  <span class="text-xs font-black text-indigo-600 dark:text-indigo-400">Rs. {{ user.monthlyBill }}</span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <!-- Year & Scope Selector -->
+      <div class="sm:col-span-4 space-y-2">
+        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Fiscal Year & Range</label>
+        <div class="flex items-center space-x-2">
+          <select 
+            [ngModel]="selectedYear()" 
+            (ngModelChange)="selectedYear.set(+$event)" 
+            class="w-1/2 p-2.5 text-xs md:text-sm font-semibold border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            @for(year of years; track year){
+              <option [value]="year">{{ year }}</option>
+            }
+          </select>
+
+          <select 
+            [ngModel]="reportScope()" 
+            (ngModelChange)="reportScope.set($event)" 
+            class="w-1/2 p-2.5 text-xs md:text-sm font-semibold border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="fullYear">Full Year (12 Mo)</option>
+            <option value="tillCurrentMonth">Till Current Month</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statement Display Card -->
+  @if (selectedUser(); as user) {
+    <div class="space-y-4 md:space-y-6 animate-fadeIn">
+      
+      <!-- Customer Info & Summary KPIs -->
+      <div class="p-4 md:p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+        
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <div class="flex items-center space-x-2">
+              <h3 class="text-base md:text-lg font-black text-slate-900 dark:text-white">{{ user.name }}</h3>
+              <span class="px-2 py-0.5 text-[10px] font-bold rounded"
+                [class]="user.category === 'Internet' ? 'bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300' : 'bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300'">
+                {{ user.category }}
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center space-x-2">
+              <span><i class="fas fa-map-marker-alt text-slate-400 mr-1"></i>{{ user.address }}</span>
+              @if (user.phone) {
+                <span>• <i class="fas fa-phone text-slate-400 mr-1"></i>{{ user.phone }}</span>
+              }
+            </p>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <button 
+              (click)="generatePdf()" 
+              [disabled]="!statementData().length" 
+              class="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center space-x-1.5 tap-active disabled:opacity-50">
+              <i class="fas fa-file-pdf"></i>
+              <span>PDF Report</span>
+            </button>
+            <button 
+              (click)="exportCsv()" 
+              [disabled]="!statementData().length" 
+              class="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 rounded-xl hover:bg-emerald-100 transition-colors flex items-center justify-center space-x-1.5 tap-active disabled:opacity-50">
+              <i class="fas fa-file-csv"></i>
+              <span>CSV Export</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3 KPI Summary Cards -->
+        @if (statementSummary(); as summary) {
+          <div class="grid grid-cols-3 gap-2.5 md:gap-4">
+            <div class="p-3 md:p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800">
+              <span class="text-[10px] md:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Billed</span>
+              <p class="text-sm md:text-xl font-black text-slate-900 dark:text-white mt-0.5">Rs. {{ summary.totalBilled | number:'1.0-0' }}</p>
+            </div>
+            <div class="p-3 md:p-4 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/60">
+              <span class="text-[10px] md:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Total Paid</span>
+              <p class="text-sm md:text-xl font-black text-emerald-700 dark:text-emerald-300 mt-0.5">Rs. {{ summary.totalPaid | number:'1.0-0' }}</p>
+            </div>
+            <div class="p-3 md:p-4 rounded-xl bg-rose-50/70 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900/60">
+              <span class="text-[10px] md:text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">Balance Due</span>
+              <p class="text-sm md:text-xl font-black text-rose-700 dark:text-rose-300 mt-0.5">Rs. {{ summary.totalDue | number:'1.0-0' }}</p>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- ================= MOBILE VIEW: MONTHLY STATEMENT CARDS (md:hidden) ================= -->
+      <div class="md:hidden space-y-2.5">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">Monthly Ledger Breakdown ({{ selectedYear() }})</h4>
+        @for(row of statementData(); track row.month) {
+          <div class="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-2" [class.opacity-50]="row.status === 'N/A'">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs flex items-center justify-center">
+                  {{ row.month }}
+                </span>
+                <span class="font-bold text-sm text-slate-900 dark:text-white">{{ row.monthName }}</span>
+              </div>
+              <span class="px-2 py-0.5 text-[10px] font-bold rounded-lg"
+                [class]="row.status === 'Paid' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : row.status === 'Not Paid' ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300' : row.status === 'Half Paid' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'">
+                {{ row.status }}
+              </span>
+            </div>
+
+            @if (row.status !== 'N/A') {
+              <div class="grid grid-cols-3 gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 text-xs">
+                <div>
+                  <span class="text-[10px] text-slate-400 font-semibold uppercase block">Billed</span>
+                  <span class="font-bold text-slate-900 dark:text-white">Rs. {{ row.billAmount }}</span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-400 font-semibold uppercase block">Paid</span>
+                  <span class="font-bold text-emerald-600">Rs. {{ row.paidAmount }}</span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-400 font-semibold uppercase block">Due</span>
+                  <span class="font-bold text-rose-600">Rs. {{ row.due }}</span>
+                </div>
+              </div>
+            }
+
+            @if (row.paymentDate) {
+              <p class="text-[10px] text-slate-400 text-right">
+                Paid on: {{ row.paymentDate | date:'mediumDate' }}
+              </p>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- ================= DESKTOP VIEW: FULL TABLE (hidden md:block) ================= -->
+      <div class="hidden md:block bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left text-slate-600 dark:text-slate-300">
+            <thead class="text-xs uppercase bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+              <tr>
+                <th scope="col" class="px-6 py-3.5 font-bold">#</th>
+                <th scope="col" class="px-6 py-3.5 font-bold">Month</th>
+                <th scope="col" class="px-6 py-3.5 font-bold text-right">Bill Amount</th>
+                <th scope="col" class="px-6 py-3.5 font-bold text-right">Paid Amount</th>
+                <th scope="col" class="px-6 py-3.5 font-bold text-right">Due</th>
+                <th scope="col" class="px-6 py-3.5 font-bold text-center">Status</th>
+                <th scope="col" class="px-6 py-3.5 font-bold">Payment Date</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              @for(row of statementData(); track row.month; let i = $index) {
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors" [class.opacity-50]="row.status === 'N/A'">
+                  <td class="px-6 py-3.5 font-medium text-slate-400">{{ i + 1 }}</td>
+                  <td class="px-6 py-3.5 font-bold text-slate-900 dark:text-white">{{ row.monthName }}</td>
+                  <td class="px-6 py-3.5 text-right font-semibold text-slate-900 dark:text-white">Rs. {{ row.billAmount | number:'1.2-2' }}</td>
+                  <td class="px-6 py-3.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">Rs. {{ row.paidAmount | number:'1.2-2' }}</td>
+                  <td class="px-6 py-3.5 text-right font-bold" [class.text-rose-600]="row.due > 0">Rs. {{ row.due | number:'1.2-2' }}</td>
+                  <td class="px-6 py-3.5 text-center">
+                    <span class="px-2.5 py-1 text-xs font-bold rounded-lg inline-block" [class]="getStatusClass(row.status)">
+                      {{ row.status }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-3.5 text-slate-500 dark:text-slate-400">{{ row.paymentDate ? (row.paymentDate | date:'mediumDate') : '-' }}</td>
+                </tr>
+              }
+            </tbody>
+            <!-- Summary Footer -->
+            @if(statementSummary(); as summary) {
+              <tfoot class="bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white border-t-2 border-slate-200 dark:border-slate-700">
+                <tr>
+                  <td class="px-6 py-4"></td>
+                  <td class="px-6 py-4 font-black">Annual Total</td>
+                  <td class="px-6 py-4 text-right">Rs. {{ summary.totalBilled | number:'1.2-2' }}</td>
+                  <td class="px-6 py-4 text-right text-emerald-600 dark:text-emerald-400">Rs. {{ summary.totalPaid | number:'1.2-2' }}</td>
+                  <td class="px-6 py-4 text-right text-rose-600">Rs. {{ summary.totalDue | number:'1.2-2' }}</td>
+                  <td colspan="2" class="px-6 py-4"></td>
+                </tr>
+              </tfoot>
+            }
+          </table>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="text-center p-8 md:p-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500 dark:text-indigo-400 flex items-center justify-center text-2xl mb-3">
+        <i class="fas fa-file-invoice-dollar"></i>
+      </div>
+      <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">Select a Customer</h3>
+      <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1">Start typing a customer name or address in the search box above to view their 12-month billing and payment history.</p>
+    </div>
+  }
+</div>

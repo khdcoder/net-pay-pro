@@ -1,0 +1,358 @@
+<div class="flex h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 overflow-hidden font-sans">
+  
+  <!-- ================= DESKTOP SIDEBAR (Visible on md+) ================= -->
+  <aside 
+    class="hidden md:flex flex-col bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-300 z-30 shrink-0 select-none"
+    [class]="isSidebarOpen() ? 'w-64' : 'w-20'">
+    
+    <!-- Logo & Brand Header -->
+    <div class="flex items-center h-16 px-4 border-b border-slate-100 dark:border-slate-800" [class.justify-center]="!isSidebarOpen()">
+      <div class="flex items-center space-x-3">
+        <img src="/icons/net-pay.png" alt="NetPay Pro" class="w-10 h-10 rounded-xl object-cover shadow-md shadow-indigo-500/20 shrink-0">
+        @if (isSidebarOpen()) {
+          <div class="flex flex-col overflow-hidden">
+            <span class="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-tight">NetPay Pro</span>
+            <span class="text-[11px] font-medium text-indigo-600 dark:text-indigo-400">Billing Manager</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Navigation links -->
+    <nav class="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto">
+      <a 
+        routerLink="/dashboard" 
+        routerLinkActive="bg-indigo-600 text-white shadow-md shadow-indigo-600/20 dark:bg-indigo-600 dark:text-white" 
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="flex items-center px-3.5 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-xl font-medium transition-all group"
+        [class.justify-center]="!isSidebarOpen()"
+        title="Dashboard">
+        <i class="fas fa-tachometer-alt fa-fw text-lg group-hover:scale-110 transition-transform"></i>
+        @if (isSidebarOpen()) {
+          <span class="ml-3 text-sm">Dashboard</span>
+        }
+      </a>
+
+      <a 
+        routerLink="/users" 
+        routerLinkActive="bg-indigo-600 text-white shadow-md shadow-indigo-600/20 dark:bg-indigo-600 dark:text-white" 
+        class="flex items-center px-3.5 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-xl font-medium transition-all group"
+        [class.justify-center]="!isSidebarOpen()"
+        title="Users">
+        <i class="fas fa-users fa-fw text-lg group-hover:scale-110 transition-transform"></i>
+        @if (isSidebarOpen()) {
+          <span class="ml-3 text-sm">Users</span>
+          <span class="ml-auto text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold group-[.text-white]:bg-indigo-700/60 group-[.text-white]:text-white">
+            {{ storageService.users().length }}
+          </span>
+        }
+      </a>
+
+      <a 
+        routerLink="/billing" 
+        routerLinkActive="bg-indigo-600 text-white shadow-md shadow-indigo-600/20 dark:bg-indigo-600 dark:text-white" 
+        class="flex items-center px-3.5 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-xl font-medium transition-all group relative"
+        [class.justify-center]="!isSidebarOpen()"
+        title="Billing & Collection">
+        <i class="fas fa-file-invoice-dollar fa-fw text-lg group-hover:scale-110 transition-transform"></i>
+        @if (isSidebarOpen()) {
+          <span class="ml-3 text-sm">Billing</span>
+          @if (pendingBillsCount() > 0) {
+            <span class="ml-auto text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 font-bold group-[.text-white]:bg-amber-400 group-[.text-white]:text-slate-900">
+              {{ pendingBillsCount() }}
+            </span>
+          }
+        } @else if (pendingBillsCount() > 0) {
+          <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-amber-500 rounded-full ring-2 ring-white dark:ring-slate-900"></span>
+        }
+      </a>
+
+      <a 
+        routerLink="/statements" 
+        routerLinkActive="bg-indigo-600 text-white shadow-md shadow-indigo-600/20 dark:bg-indigo-600 dark:text-white" 
+        class="flex items-center px-3.5 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-xl font-medium transition-all group"
+        [class.justify-center]="!isSidebarOpen()"
+        title="Statements">
+        <i class="fas fa-history fa-fw text-lg group-hover:scale-110 transition-transform"></i>
+        @if (isSidebarOpen()) {
+          <span class="ml-3 text-sm">Statements</span>
+        }
+      </a>
+
+      <a 
+        routerLink="/settings" 
+        routerLinkActive="bg-indigo-600 text-white shadow-md shadow-indigo-600/20 dark:bg-indigo-600 dark:text-white" 
+        class="flex items-center px-3.5 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded-xl font-medium transition-all group"
+        [class.justify-center]="!isSidebarOpen()"
+        title="Settings & Sync">
+        <i class="fas fa-sliders-h fa-fw text-lg group-hover:scale-110 transition-transform"></i>
+        @if (isSidebarOpen()) {
+          <span class="ml-3 text-sm">Settings</span>
+        }
+      </a>
+    </nav>
+
+    <!-- License & Developer Tag -->
+    <div class="p-3 border-t border-slate-100 dark:border-slate-800">
+      <a 
+        href="https://khalid-software-house.web.app" 
+        target="_blank" 
+        class="block p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 transition-all text-center group">
+        @if (isSidebarOpen()) {
+          <div class="flex items-center justify-between">
+            <div class="text-left">
+              <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Developed By</p>
+              <p class="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 transition-colors">Khalid Software House</p>
+            </div>
+            <i class="fas fa-external-link-alt text-xs text-slate-400 group-hover:text-indigo-600"></i>
+          </div>
+        } @else {
+          <i class="fas fa-laptop-code text-indigo-500 text-base" title="Developed by Khalid Software House"></i>
+        }
+      </a>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN APP WRAPPER ================= -->
+  <div class="flex flex-col flex-1 min-w-0 overflow-hidden relative">
+    
+    <!-- Top App Bar (Header for both Desktop & Mobile) -->
+    <header class="flex items-center justify-between h-14 md:h-16 px-4 md:px-6 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800/80 z-20 shrink-0">
+      
+      <!-- Left side: Mobile Brand + Menu / Desktop Sidebar Toggle -->
+      <div class="flex items-center space-x-3">
+        <!-- Desktop Sidebar Toggle Button -->
+        <button 
+          (click)="toggleSidebar()" 
+          class="hidden md:flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
+          title="Toggle Sidebar">
+          <i class="fas fa-bars text-lg"></i>
+        </button>
+
+        <!-- Mobile Drawer Toggle Button -->
+        <button 
+          (click)="toggleMobileDrawer()" 
+          class="md:hidden flex items-center justify-center w-9 h-9 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 tap-active"
+          aria-label="Open menu">
+          <i class="fas fa-bars text-lg"></i>
+        </button>
+
+        <!-- Mobile Brand Logo & Route Title -->
+        <div class="flex items-center space-x-2">
+          <img src="/icons/net-pay.png" alt="NetPay Pro" class="md:hidden w-7 h-7 rounded-lg object-cover shadow-sm shrink-0">
+          <h1 class="text-base md:text-lg font-bold text-slate-900 dark:text-white truncate">
+            {{ currentRouteTitle() }}
+          </h1>
+        </div>
+      </div>
+
+      <!-- Right side: Actions (Theme switcher, Quick stats, Sync) -->
+      <div class="flex items-center space-x-2">
+        <!-- Theme Toggle Button -->
+        <button 
+          (click)="toggleDarkMode()" 
+          class="flex items-center justify-center w-9 h-9 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors tap-active"
+          [title]="isDarkMode() ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+          <i [class]="isDarkMode() ? 'fas fa-sun text-amber-400 text-base' : 'fas fa-moon text-slate-600 text-base'"></i>
+        </button>
+
+        <!-- Dynamic Quick Sync Badge -->
+        @if (syncService.isSyncing()) {
+          <div class="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800/40 text-indigo-700 dark:text-indigo-400 text-[11px] sm:text-xs font-semibold">
+            <i class="fas fa-spinner fa-spin text-xs"></i>
+            <span class="hidden sm:inline">Syncing Cloud...</span>
+            <span class="sm:hidden">Syncing</span>
+          </div>
+        } @else if (!syncService.isOnline()) {
+          <div class="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/40 text-amber-700 dark:text-amber-400 text-[11px] sm:text-xs font-semibold" title="Data saved locally. Will auto-sync to cloud when internet is back.">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span>Offline</span>
+          </div>
+        } @else if (storageService.settings().autoSyncEnabled) {
+          <div class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-400 text-xs font-semibold" title="Automatic cloud backup active">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Cloud Active</span>
+          </div>
+        }
+      </div>
+    </header>
+    
+    <!-- Content Area (Scrollable with mobile bottom padding) -->
+    <main class="flex-1 p-3 sm:p-5 md:p-6 overflow-x-hidden overflow-y-auto pb-24 md:pb-6 bg-slate-50 dark:bg-slate-950">
+      <router-outlet></router-outlet>
+    </main>
+
+    <!-- ================= MOBILE BOTTOM NAVIGATION BAR (Mobile Native App Bar) ================= -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-40 px-2 flex items-center justify-around shadow-lg select-none">
+      
+      <!-- Dashboard -->
+      <a 
+        routerLink="/dashboard" 
+        routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" 
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="flex flex-col items-center justify-center w-14 py-1 text-slate-500 dark:text-slate-400 transition-all tap-active group">
+        <div class="relative flex items-center justify-center">
+          <i class="fas fa-tachometer-alt text-lg group-[.text-indigo-600]:scale-110 transition-transform"></i>
+        </div>
+        <span class="text-[10px] mt-0.5 font-medium leading-none">Home</span>
+      </a>
+
+      <!-- Users -->
+      <a 
+        routerLink="/users" 
+        routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" 
+        class="flex flex-col items-center justify-center w-14 py-1 text-slate-500 dark:text-slate-400 transition-all tap-active group">
+        <div class="relative flex items-center justify-center">
+          <i class="fas fa-users text-lg group-[.text-indigo-600]:scale-110 transition-transform"></i>
+        </div>
+        <span class="text-[10px] mt-0.5 font-medium leading-none">Users</span>
+      </a>
+
+      <!-- Billing (Centered Highlighted Button) -->
+      <a 
+        routerLink="/billing" 
+        routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" 
+        class="flex flex-col items-center justify-center w-16 py-1 text-slate-500 dark:text-slate-400 transition-all tap-active group relative">
+        <div class="w-10 h-10 -mt-5 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/40 ring-4 ring-white dark:ring-slate-900 group-[.text-indigo-600]:scale-105 transition-transform">
+          <i class="fas fa-file-invoice-dollar text-base"></i>
+          @if (pendingBillsCount() > 0) {
+            <span class="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-amber-500 text-[10px] font-extrabold text-slate-900 ring-2 ring-white dark:ring-slate-900">
+              {{ pendingBillsCount() }}
+            </span>
+          }
+        </div>
+        <span class="text-[10px] mt-1 font-medium leading-none">Billing</span>
+      </a>
+
+      <!-- Statements -->
+      <a 
+        routerLink="/statements" 
+        routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" 
+        class="flex flex-col items-center justify-center w-14 py-1 text-slate-500 dark:text-slate-400 transition-all tap-active group">
+        <div class="relative flex items-center justify-center">
+          <i class="fas fa-receipt text-lg group-[.text-indigo-600]:scale-110 transition-transform"></i>
+        </div>
+        <span class="text-[10px] mt-0.5 font-medium leading-none">History</span>
+      </a>
+
+      <!-- Settings -->
+      <a 
+        routerLink="/settings" 
+        routerLinkActive="text-indigo-600 dark:text-indigo-400 font-bold" 
+        class="flex flex-col items-center justify-center w-14 py-1 text-slate-500 dark:text-slate-400 transition-all tap-active group">
+        <div class="relative flex items-center justify-center">
+          <i class="fas fa-sliders-h text-lg group-[.text-indigo-600]:scale-110 transition-transform"></i>
+        </div>
+        <span class="text-[10px] mt-0.5 font-medium leading-none">Settings</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- ================= MOBILE SLIDE-OVER DRAWER ================= -->
+  @if (isMobileDrawerOpen()) {
+    <div class="fixed inset-0 z-50 md:hidden">
+      <!-- Backdrop -->
+      <div 
+        (click)="closeMobileDrawer()" 
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity">
+      </div>
+
+      <!-- Drawer Content -->
+      <div class="fixed inset-y-0 left-0 max-w-xs w-full bg-white dark:bg-slate-900 shadow-2xl z-50 flex flex-col justify-between p-5 border-r border-slate-200 dark:border-slate-800">
+        
+        <div>
+          <!-- Drawer Header -->
+          <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center space-x-3">
+              <img src="/icons/net-pay.png" alt="NetPay Pro" class="w-10 h-10 rounded-xl object-cover shadow-md shadow-indigo-600/30 shrink-0">
+              <div>
+                <h2 class="text-base font-bold text-slate-900 dark:text-white">NetPay Pro</h2>
+                <p class="text-xs text-indigo-600 dark:text-indigo-400 font-medium">Mobile Manager</p>
+              </div>
+            </div>
+            <button 
+              (click)="closeMobileDrawer()" 
+              class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+              aria-label="Close menu">
+              <i class="fas fa-times text-base"></i>
+            </button>
+          </div>
+
+          <!-- Quick Stats in Drawer -->
+          <div class="grid grid-cols-2 gap-2 my-4">
+            <div class="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/40">
+              <span class="text-[10px] uppercase font-bold text-indigo-500">Total Users</span>
+              <p class="text-lg font-bold text-indigo-900 dark:text-indigo-300">{{ storageService.users().length }}</p>
+            </div>
+            <div class="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900/40">
+              <span class="text-[10px] uppercase font-bold text-amber-500">Unpaid Bills</span>
+              <p class="text-lg font-bold text-amber-900 dark:text-amber-300">{{ pendingBillsCount() }}</p>
+            </div>
+          </div>
+
+          <!-- Navigation Links in Drawer -->
+          <nav class="space-y-1.5">
+            <a 
+              routerLink="/dashboard" 
+              (click)="closeMobileDrawer()"
+              routerLinkActive="bg-indigo-600 text-white" 
+              class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl font-medium text-sm transition-colors">
+              <i class="fas fa-tachometer-alt w-6 text-base"></i>
+              <span>Dashboard</span>
+            </a>
+
+            <a 
+              routerLink="/users" 
+              (click)="closeMobileDrawer()"
+              routerLinkActive="bg-indigo-600 text-white" 
+              class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl font-medium text-sm transition-colors">
+              <i class="fas fa-users w-6 text-base"></i>
+              <span>Users Directory</span>
+            </a>
+
+            <a 
+              routerLink="/billing" 
+              (click)="closeMobileDrawer()"
+              routerLinkActive="bg-indigo-600 text-white" 
+              class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl font-medium text-sm transition-colors">
+              <i class="fas fa-file-invoice-dollar w-6 text-base"></i>
+              <span>Billing & Payments</span>
+            </a>
+
+            <a 
+              routerLink="/statements" 
+              (click)="closeMobileDrawer()"
+              routerLinkActive="bg-indigo-600 text-white" 
+              class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl font-medium text-sm transition-colors">
+              <i class="fas fa-receipt w-6 text-base"></i>
+              <span>Statements & Reports</span>
+            </a>
+
+            <a 
+              routerLink="/settings" 
+              (click)="closeMobileDrawer()"
+              routerLinkActive="bg-indigo-600 text-white" 
+              class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl font-medium text-sm transition-colors">
+              <i class="fas fa-sliders-h w-6 text-base"></i>
+              <span>Settings & Sync</span>
+            </a>
+          </nav>
+        </div>
+
+        <!-- Drawer Footer -->
+        <div class="pt-4 border-t border-slate-100 dark:border-slate-800">
+          <a 
+            href="https://khalid-software-house.web.app" 
+            target="_blank" 
+            class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/70 text-slate-700 dark:text-slate-300">
+            <div>
+              <p class="text-[10px] text-slate-400 uppercase font-semibold">Developed By</p>
+              <p class="text-xs font-bold text-slate-900 dark:text-white">Khalid Software House</p>
+            </div>
+            <i class="fas fa-external-link-alt text-xs text-indigo-500"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  }
+</div>

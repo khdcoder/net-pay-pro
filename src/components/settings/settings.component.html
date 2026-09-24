@@ -1,0 +1,474 @@
+<div class="max-w-4xl mx-auto space-y-4 md:space-y-6">
+  <app-notification></app-notification>
+
+  <!-- Page Header -->
+  <div class="p-4 md:p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+    <div>
+      <h2 class="text-base md:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <i class="fas fa-shield-alt text-indigo-600 dark:text-indigo-400"></i>
+        <span>Settings & Data Protection</span>
+      </h2>
+      <p class="text-xs text-slate-500 dark:text-slate-400">Manage persistent storage, Chrome history protection, cloud sync, and local backups</p>
+    </div>
+
+    <!-- Quick Help Guide Button -->
+    <button 
+      type="button" 
+      (click)="openChromeGuide()"
+      class="px-3.5 py-2 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 font-bold text-xs rounded-xl border border-indigo-200/80 dark:border-indigo-800/80 transition-colors flex items-center justify-center gap-2 tap-active">
+      <i class="fas fa-question-circle text-indigo-500"></i>
+      <span>Chrome Data Protection Guide</span>
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+    
+    <!-- 1. Chrome Data Protection & Persistent Storage Shield Card -->
+    <div class="p-5 md:p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg shadow-sm">
+            <i class="fas fa-database"></i>
+          </div>
+          <div>
+            <h3 class="text-sm md:text-base font-bold text-slate-900 dark:text-white">Storage Protection Shield</h3>
+            <p class="text-[11px] text-slate-400">Multi-layer offline persistence protection</p>
+          </div>
+        </div>
+
+        <div>
+          @if (storageService.isStoragePersisted()) {
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+              <i class="fas fa-check-circle mr-1 text-emerald-500"></i>
+              Protected
+            </span>
+          } @else {
+            <button 
+              type="button" 
+              (click)="requestPersistentStorage()"
+              class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60 hover:bg-indigo-100">
+              <i class="fas fa-lock mr-1"></i>
+              Enable Protection
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Protection Safeguards List -->
+      <div class="space-y-2 text-xs">
+        <div class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+          <span class="text-slate-600 dark:text-slate-300 flex items-center gap-2">
+            <i class="fas fa-cubes text-indigo-500"></i> IndexedDB Dual Storage Engine
+          </span>
+          <span class="font-bold text-emerald-600 dark:text-emerald-400 text-[11px]">Active</span>
+        </div>
+
+        <div class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+          <span class="text-slate-600 dark:text-slate-300 flex items-center gap-2">
+            <i class="fas fa-shield-virus text-indigo-500"></i> Anti-Wipe Cloud Protection
+          </span>
+          <span class="font-bold text-emerald-600 dark:text-emerald-400 text-[11px]">Active</span>
+        </div>
+
+        <div class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+          <span class="text-slate-600 dark:text-slate-300 flex items-center gap-2">
+            <i class="fas fa-undo text-indigo-500"></i> Auto-Recovery on App Launch
+          </span>
+          <span class="font-bold text-emerald-600 dark:text-emerald-400 text-[11px]">Active</span>
+        </div>
+      </div>
+
+      <!-- Safe Chrome Clearing Tip -->
+      <div class="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/60 rounded-xl space-y-1.5 text-xs text-amber-900 dark:text-amber-200">
+        <div class="font-bold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
+          <i class="fas fa-lightbulb"></i> Important Chrome History Tip:
+        </div>
+        <p class="text-[11px] leading-relaxed">
+          When clearing Chrome history, keep <strong>"Cookies and other site data" UNCHECKED</strong>. Clearing only "Browsing history" and "Cached files" will keep your application data 100% intact!
+        </p>
+        <button 
+          type="button" 
+          (click)="openChromeGuide()" 
+          class="text-[11px] font-bold text-indigo-700 dark:text-indigo-400 underline pt-0.5 inline-block">
+          View Complete Guide →
+        </button>
+      </div>
+
+      <!-- Quick Snapshot Restore section if available -->
+      @if (storageService.availableSnapshots().length > 0) {
+        <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
+          <span class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Local Database Snapshots</span>
+          <div class="space-y-1 max-h-28 overflow-y-auto">
+            @for (snap of storageService.availableSnapshots().slice(0, 3); track snap.date) {
+              <div class="flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300">
+                <div>
+                  <span class="font-bold">{{ snap.date }}</span>
+                  <span class="text-slate-400 text-[10px] ml-1.5">({{ snap.userCount }} users, {{ snap.billCount }} bills)</span>
+                </div>
+                <button 
+                  type="button" 
+                  (click)="restoreSnapshot(snap.date)"
+                  class="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 font-semibold rounded text-[10px] hover:bg-indigo-100">
+                  Restore
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- 2. Google Drive Cloud Synchronization Card -->
+    <div class="p-5 md:p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center text-lg shadow-sm">
+            <i class="fab fa-google-drive"></i>
+          </div>
+          <div>
+            <h3 class="text-sm md:text-base font-bold text-slate-900 dark:text-white">Cloud Synchronization</h3>
+            <p class="text-[11px] text-slate-400">Automatic Google Drive live backups</p>
+          </div>
+        </div>
+
+        <!-- Online / Offline Status Badge -->
+        <div>
+          @if (syncService.isOnline()) {
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+              Online
+            </span>
+          } @else {
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60">
+              <span class="w-2 h-2 rounded-full bg-amber-500 mr-1.5"></span>
+              Offline Mode
+            </span>
+          }
+        </div>
+      </div>
+
+      <!-- Backup Target Email -->
+      <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/60 dark:border-slate-800 text-xs">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+            <i class="fas fa-envelope text-indigo-500"></i> Backup Google Account:
+          </span>
+          @if (!isEditingEmail()) {
+            <button 
+              type="button"
+              (click)="isEditingEmail.set(true)"
+              class="text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
+              {{ settings().userEmail ? 'Change' : 'Set Email' }}
+            </button>
+          }
+        </div>
+
+        @if (isEditingEmail()) {
+          <div class="flex items-center gap-2 mt-1">
+            <input 
+              #customEmailInput
+              type="email" 
+              [value]="settings().userEmail || ''"
+              placeholder="e.g. yourname@gmail.com"
+              class="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <button 
+              type="button"
+              (click)="saveEmail(customEmailInput.value)"
+              class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-xs transition-colors">
+              Save
+            </button>
+            <button 
+              type="button"
+              (click)="isEditingEmail.set(false)"
+              class="px-2 py-1.5 text-slate-500 hover:text-slate-700 text-xs">
+              Cancel
+            </button>
+          </div>
+        } @else {
+          @if (settings().userEmail) {
+            <div class="font-mono text-slate-800 dark:text-slate-200 text-xs font-medium">
+              {{ settings().userEmail }}
+            </div>
+          } @else {
+            <div class="text-xs text-slate-400 italic">
+              No email configured (click "Set Email" to add)
+            </div>
+          }
+        }
+      </div>
+
+      <!-- Auto-sync Toggle -->
+      <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-800">
+        <div>
+          <span class="block text-xs font-bold text-slate-900 dark:text-white">Automatic Continuous Cloud Sync</span>
+          <span class="text-[10px] text-slate-400">Syncs on launch, edits & reconnects</span>
+        </div>
+        
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input 
+            type="checkbox" 
+            id="auto-sync"
+            class="sr-only peer"
+            [checked]="settings().autoSyncEnabled"
+            (change)="toggleAutoSync($event)">
+          <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+        </label>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+        <button 
+          (click)="backup()" 
+          [disabled]="syncService.isSyncing()"
+          class="py-2.5 px-3 text-xs font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center space-x-1.5 tap-active disabled:opacity-50">
+          @if (syncService.isSyncing()) {
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Syncing...</span>
+          } @else {
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>Backup Now</span>
+          }
+        </button>
+        <button 
+          (click)="restore()" 
+          [disabled]="syncService.isSyncing()"
+          class="py-2.5 px-3 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center space-x-1.5 tap-active disabled:opacity-50">
+          <i class="fas fa-cloud-download-alt text-emerald-500"></i>
+          <span>Restore Cloud</span>
+        </button>
+      </div>
+
+      <div class="text-[11px] text-center text-slate-400 pt-1">
+        @if (settings().lastSyncTimestamp) {
+          <span>Last cloud sync: {{ settings().lastSyncTimestamp | date:'medium' }}</span>
+        } @else {
+          <span>Last cloud sync: Ready to sync</span>
+        }
+      </div>
+    </div>
+
+    <!-- 3. Offline Local File Backup Card (NEVER deleted by Chrome) -->
+    <div class="p-5 md:p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+      <div class="flex items-center space-x-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg">
+          <i class="fas fa-file-download"></i>
+        </div>
+        <div>
+          <h3 class="text-sm md:text-base font-bold text-slate-900 dark:text-white">Device File Backup (.json)</h3>
+          <p class="text-[11px] text-slate-400">Permanent backup to Downloads folder</p>
+        </div>
+      </div>
+
+      <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60 rounded-xl text-xs text-emerald-800 dark:text-emerald-200 flex items-start space-x-2">
+        <i class="fas fa-check-circle text-emerald-600 mt-0.5"></i>
+        <span><strong>Protected Storage:</strong> Backup files downloaded to your device's Downloads folder are independent of the browser and <strong>will never be deleted</strong> when clearing browser cache or cookies.</span>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+        <button 
+          (click)="exportLocalData()" 
+          class="py-2.5 px-3 text-xs font-bold text-white bg-slate-900 dark:bg-slate-800 rounded-xl hover:bg-black transition-colors shadow-sm flex items-center justify-center space-x-1.5 tap-active">
+          <i class="fas fa-download"></i>
+          <span>Download Backup File</span>
+        </button>
+        <button 
+          (click)="triggerImport()" 
+          class="py-2.5 px-3 text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200/60 dark:border-amber-800 rounded-xl hover:bg-amber-100 transition-colors flex items-center justify-center space-x-1.5 tap-active">
+          <i class="fas fa-upload"></i>
+          <span>Import Backup File</span>
+        </button>
+      </div>
+
+      <!-- Hidden File Input -->
+      <input 
+        type="file" 
+        id="local-import-input" 
+        class="hidden" 
+        accept=".json" 
+        (change)="importLocalData($event)">
+      
+      <div class="text-[11px] text-slate-400 text-center">
+        Recommendation: Download a fresh backup file once a week for maximum peace of mind.
+      </div>
+    </div>
+
+    <!-- 4. Open Source Edition & Demo Data Management Card -->
+    <div class="p-5 md:p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center text-lg shadow-sm">
+            <i class="fab fa-github"></i>
+          </div>
+          <div>
+            <h3 class="text-sm md:text-base font-bold text-slate-900 dark:text-white">Open Source Edition</h3>
+            <p class="text-[11px] text-slate-400">Community Edition • Free & Unlocked</p>
+          </div>
+        </div>
+
+        <span class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 flex items-center space-x-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Free & Open Source</span>
+        </span>
+      </div>
+
+      <div class="space-y-2 text-xs">
+        <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl flex items-center justify-between">
+          <div>
+            <span class="text-[10px] uppercase font-bold text-slate-400 block">GitHub Repository</span>
+            <a href="https://github.com/khdcoder/net-pay-pro" target="_blank" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 mt-0.5">
+              <span>khdcoder / net-pay-pro</span>
+              <i class="fas fa-external-link-alt text-[10px]"></i>
+            </a>
+          </div>
+          <span class="text-[11px] px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-semibold">
+            v1.0.0
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+          <button 
+            type="button" 
+            (click)="loadDemoData()" 
+            class="py-2.5 px-3 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 font-bold text-xs rounded-xl border border-indigo-200/80 dark:border-indigo-800/80 transition-colors flex items-center justify-center space-x-1.5 tap-active"
+            title="Load 50 sample subscribers and billing history">
+            <i class="fas fa-users-cog"></i>
+            <span>Load 50 Sample Users</span>
+          </button>
+
+          <button 
+            type="button" 
+            (click)="clearAllData()" 
+            class="py-2.5 px-3 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-700 dark:text-rose-400 font-bold text-xs rounded-xl border border-rose-200/80 dark:border-rose-900/60 transition-colors flex items-center justify-center space-x-1.5 tap-active"
+            title="Clear all data to start fresh">
+            <i class="fas fa-trash-alt"></i>
+            <span>Clear All Data</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-3 bg-indigo-50 dark:bg-indigo-950/40 rounded-xl border border-indigo-100 dark:border-indigo-900/60 flex items-start space-x-2.5 text-xs text-indigo-700 dark:text-indigo-300">
+        <i class="fas fa-heart text-rose-500 text-sm mt-0.5 shrink-0"></i>
+        <div class="leading-relaxed">
+          Open-source software developed by 
+          <a href="https://khalid-software-house.web.app" target="_blank" class="font-bold underline hover:text-indigo-900">Khalid Software House</a>. 
+          Freely available for all ISP and Cable TV network operators worldwide!
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Chrome Data Protection Guide Modal -->
+  @if (isChromeGuideOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4 animate-fadeIn">
+      <div class="w-full max-w-lg p-6 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto space-y-4">
+        
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg shadow-sm">
+              <i class="fas fa-shield-alt"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Chrome History & Data Safety Guide</h3>
+              <p class="text-[11px] text-slate-400">How to safely clear browser history without losing data</p>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            (click)="closeChromeGuide()"
+            class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 flex items-center justify-center">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="space-y-3 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+          
+          <div class="p-3.5 bg-rose-50 dark:bg-rose-950/40 rounded-2xl border border-rose-200/60 dark:border-rose-800/60">
+            <h4 class="font-bold text-rose-800 dark:text-rose-300 text-sm mb-1 flex items-center gap-1.5">
+              <i class="fas fa-exclamation-triangle"></i> Why Does Data Disappear When History Is Cleared?
+            </h4>
+            <p class="text-[11px] text-rose-700 dark:text-rose-300">
+              When using Chrome's <strong>"Clear browsing data"</strong>, the option <strong>"Cookies and other site data"</strong> is selected by default. This option wipes the offline storage of all web apps installed on your device.
+            </p>
+          </div>
+
+          <div class="p-4 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200/60 dark:border-emerald-800/60 space-y-2">
+            <h4 class="font-bold text-emerald-800 dark:text-emerald-300 text-sm flex items-center gap-1.5">
+              <i class="fas fa-check-circle"></i> Recommended 3-Step Cleaning Method:
+            </h4>
+            <ol class="list-decimal list-inside space-y-1.5 text-[11px] text-emerald-900 dark:text-emerald-200 font-medium">
+              <li>Open Chrome and navigate to <strong>History &rarr; Clear browsing data</strong>.</li>
+              <li>Keep <strong>"Browsing history"</strong> and <strong>"Cached images and files"</strong> checked.</li>
+              <li><strong class="text-rose-600 dark:text-rose-400 bg-white/70 dark:bg-slate-900 px-1 py-0.5 rounded">UNCHECK "Cookies and other site data"!</strong></li>
+            </ol>
+            <p class="text-[10px] text-emerald-700 dark:text-emerald-300 pt-1">
+              Your browser history will be completely cleaned, while your NetPay Pro application data remains 100% safe and intact.
+            </p>
+          </div>
+
+          <div class="p-3.5 bg-indigo-50 dark:bg-indigo-950/40 rounded-2xl border border-indigo-200/60 dark:border-indigo-800/60 space-y-1.5">
+            <h4 class="font-bold text-indigo-800 dark:text-indigo-300 text-xs flex items-center gap-1.5">
+              <i class="fas fa-life-ring"></i> Recovery Options if Data is Ever Missing:
+            </h4>
+            <ul class="list-disc list-inside space-y-1 text-[11px] text-indigo-900 dark:text-indigo-200">
+              <li><strong>1. Restore from Cloud:</strong> Click "Restore Cloud" under Settings to fetch the latest automatic cloud copy.</li>
+              <li><strong>2. Download Backup File:</strong> Keep periodic .json backup files in your Downloads folder. Files in your device's Downloads are never wiped by Chrome.</li>
+              <li><strong>3. Storage Protection Shield:</strong> NetPay Pro utilizes IndexedDB dual storage and automated daily snapshots for enhanced data safety.</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button 
+            type="button" 
+            (click)="closeChromeGuide()" 
+            class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition-colors tap-active">
+            Got it
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Email Prompt Modal for Drive Sync -->
+  @if (isModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fadeIn">
+      <div class="w-full max-w-md p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800">
+        
+        <div class="flex items-center space-x-2.5 pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
+          <div class="w-9 h-9 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center text-base">
+            <i class="fab fa-google-drive"></i>
+          </div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white capitalize">{{ actionType() }} Cloud Data</h3>
+        </div>
+
+        <p class="text-xs text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">
+          @if (actionType() === 'backup' && !settings().userEmail) {
+            <span>Please provide your Google email address to save backup archives directly to your Google Drive account.</span>
+          } @else {
+            <span>Confirm your email address to proceed with the {{ actionType() }} operation.</span>
+          }
+        </p>
+
+        <div class="space-y-1">
+          <label for="email" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Email Address</label>
+          <input 
+            id="email" 
+            type="email" 
+            [ngModel]="emailInput()"
+            (ngModelChange)="emailInput.set($event)"
+            (keydown.enter)="confirmAction()"
+            placeholder="your.email@gmail.com"
+            class="w-full p-2.5 text-xs md:text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div class="flex justify-end mt-6 space-x-2">
+          <button type="button" (click)="closeModal()" class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 transition-colors">Cancel</button>
+          <button type="button" (click)="confirmAction()" class="px-5 py-2.5 text-xs font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm transition-colors">Confirm</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,749 @@
+<div class="w-full max-w-[1600px] mx-auto space-y-3 md:space-y-4">
+  <app-notification></app-notification>
+
+  <!-- Top Billing Controls (Compact Bar) -->
+  <div class="p-3 md:p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row justify-between sm:items-center gap-2.5">
+    <div class="flex items-center space-x-2.5">
+      <div class="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-sm md:text-base shrink-0">
+        <i class="fas fa-cash-register"></i>
+      </div>
+      <div>
+        <h2 class="text-sm md:text-base font-black text-slate-900 dark:text-white leading-tight">Billing & Collection Desk</h2>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">Monthly billing, customer arrears tracking, and payment ledger</p>
+      </div>
+    </div>
+
+    <!-- Month, Year & Village Selector -->
+    <div class="flex flex-wrap items-center gap-2">
+      <!-- Village Filter (Saved across sessions) -->
+      @if (availableVillages().length > 0) {
+        <div class="relative">
+          <select 
+            [ngModel]="selectedVillage()" 
+            (ngModelChange)="setVillageFilter($event)" 
+            class="p-2 text-xs md:text-sm font-semibold border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 max-w-[160px]"
+            title="Filter by Village / Area">
+            <option value="">All Villages</option>
+            @for(v of availableVillages(); track v){
+              <option [value]="v">{{ v }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      <select 
+        [ngModel]="selectedMonth()" 
+        (ngModelChange)="selectedMonth.set(+$event); onMonthOrYearChange()" 
+        class="p-2 text-xs md:text-sm font-semibold border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500">
+        @for(month of months; track month.value){
+          <option [value]="month.value">{{ month.name }}</option>
+        }
+      </select>
+      <select 
+        [ngModel]="selectedYear()" 
+        (ngModelChange)="selectedYear.set(+$event); onMonthOrYearChange()" 
+        class="p-2 text-xs md:text-sm font-semibold border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500">
+        @for(year of years; track year){
+          <option [value]="year">{{ year }}</option>
+        }
+      </select>
+      <button 
+        (click)="loadBillsForMonth(true)" 
+        class="p-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 rounded-xl border border-indigo-200/60 dark:border-indigo-800/60 font-bold text-xs flex items-center space-x-1"
+        title="Refresh Billing Data">
+        <i class="fas fa-sync-alt"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Billing Grid: Compact Left Form + Scrollable/Tabbed Right Table -->
+  <div class="grid grid-cols-1 gap-3 md:gap-4 lg:grid-cols-12 items-start">
+    
+    <!-- ================= LEFT: PAYMENT ENTRY & ARREARS CARD (FITS SCREEN) ================= -->
+    <div class="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-3 z-10 space-y-3">
+      <div class="p-3.5 sm:p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-2.5">
+        
+        <!-- Form Header -->
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+          <div class="flex items-center space-x-2">
+            <div class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs shrink-0">
+              <i class="fas fa-hand-holding-usd"></i>
+            </div>
+            <div>
+              <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight">Record Customer Payment</h3>
+              <p class="text-[10px] text-slate-400 leading-none">{{ months[selectedMonth()-1].name }} {{ selectedYear() }}</p>
+            </div>
+          </div>
+          
+          @if (selectedUser()) {
+            <button 
+              type="button" 
+              (click)="resetForm()" 
+              class="text-[11px] font-semibold text-slate-400 hover:text-rose-500 flex items-center space-x-1">
+              <i class="fas fa-times text-[10px]"></i>
+              <span>Clear</span>
+            </button>
+          }
+        </div>
+        
+        <!-- Customer Search Field -->
+        <div class="relative">
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+              <i class="fas fa-search text-xs"></i>
+            </div>
+            <input 
+              type="text" 
+              [ngModel]="searchQuery()" 
+              (ngModelChange)="searchQuery.set($event)" 
+              (input)="selectedUser.set(null)" 
+              placeholder="Search customer by name, address or phone..." 
+              class="w-full py-2 pl-8 pr-7 text-xs sm:text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            @if (searchQuery()) {
+              <button (click)="resetForm()" class="absolute inset-y-0 right-0 px-2.5 flex items-center text-slate-400 hover:text-rose-500">
+                <i class="fas fa-times text-xs"></i>
+              </button>
+            }
+          </div>
+
+          <!-- Typeahead Results Dropdown -->
+          @if (searchResults().length > 0 && !selectedUser()) {
+            <ul class="absolute z-30 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-700 max-h-56 overflow-y-auto">
+              @for(user of searchResults(); track user.id) {
+                <li (click)="selectUser(user)" class="p-2.5 cursor-pointer hover:bg-indigo-50/80 dark:hover:bg-slate-700/80 flex items-center justify-between transition-colors">
+                  <div>
+                    <div class="flex items-center space-x-1.5">
+                      <span class="text-xs font-bold text-slate-900 dark:text-white">{{ user.name }}</span>
+                      @if (user.category) {
+                        <span class="px-1 py-0.2 rounded text-[9px] bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold">{{ user.category }}</span>
+                      }
+                    </div>
+                    <p class="text-[10px] text-slate-400">{{ user.address }}</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-xs font-black text-indigo-600 dark:text-indigo-400">Rs. {{ user.monthlyBill }}</p>
+                    <span class="text-[10px] text-emerald-600 font-bold">Select</span>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+        
+        <!-- Selected User & Payment Form (Ultra-Compact Fit) -->
+        @if (selectedUser(); as user) {
+          <div class="space-y-2.5 animate-fadeIn">
+            
+            <!-- Compact Combined Customer Profile & Arrears Box -->
+            <div class="p-2.5 sm:p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 space-y-2">
+              
+              <!-- User Header Line -->
+              <div class="flex items-start justify-between gap-1">
+                <div>
+                  <div class="flex items-center space-x-1.5">
+                    <h4 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white">{{ user.name }}</h4>
+                    <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300">
+                      {{ user.category }}
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center space-x-1 mt-0.5">
+                    <i class="fas fa-map-marker-alt text-[9px] text-indigo-500"></i>
+                    <span class="truncate max-w-[180px] sm:max-w-[220px]">{{ user.address }}</span>
+                  </p>
+                </div>
+
+                <div class="text-right shrink-0">
+                  <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Package Bill</span>
+                  <span class="text-xs sm:text-sm font-black text-indigo-600 dark:text-indigo-400">Rs. {{ user.monthlyBill }}</span>
+                </div>
+              </div>
+
+              <!-- Arrears & Balance 3-Metric Strip (100% English) -->
+              @if (selectedUserArrearsInfo(); as arrears) {
+                <div class="pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60 space-y-1.5">
+                  <div class="flex items-center justify-between text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                    <span class="flex items-center space-x-1">
+                      <i class="fas fa-calculator text-indigo-500 text-[9px]"></i>
+                      <span>Account Balance & Arrears Summary</span>
+                    </span>
+                    @if (arrears.previousArrears > 0) {
+                      <span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
+                        Pending Arrears
+                      </span>
+                    }
+                  </div>
+
+                  <div class="grid grid-cols-3 gap-1.5 text-center">
+                    <!-- Previous Arrears -->
+                    <div class="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                      <span class="text-[9px] uppercase font-bold text-slate-400 block">Previous Arrears</span>
+                      <span class="text-xs font-black" [class.text-rose-600]="arrears.previousArrears > 0" [class.text-emerald-600]="arrears.previousArrears === 0">
+                        Rs. {{ arrears.previousArrears }}
+                      </span>
+                    </div>
+
+                    <!-- Current Month Bill -->
+                    <div class="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                      <span class="text-[9px] uppercase font-bold text-slate-400 block">Current Month</span>
+                      <span class="text-xs font-black text-slate-800 dark:text-slate-200">
+                        Rs. {{ arrears.currentBill }}
+                      </span>
+                    </div>
+
+                    <!-- Total Balance Due -->
+                    <div class="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-100 dark:border-indigo-900">
+                      <span class="text-[9px] uppercase font-bold text-indigo-600 dark:text-indigo-400 block">Total Due</span>
+                      <span class="text-xs font-black text-indigo-700 dark:text-indigo-300">
+                        Rs. {{ arrears.totalDue }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Duplicate / Already Paid Warning Notice -->
+                @if (arrears.isAlreadyPaid) {
+                  <div class="p-2 bg-amber-50 dark:bg-amber-950/40 rounded-lg border border-amber-200 dark:border-amber-900/60 flex items-center justify-between text-[11px] text-amber-800 dark:text-amber-300">
+                    <div class="flex items-center space-x-1.5">
+                      <i class="fas fa-exclamation-triangle text-amber-600 text-xs shrink-0"></i>
+                      <span class="font-bold">Already Paid (Rs. {{ arrears.currentPaid }})</span>
+                    </div>
+                    <span class="text-[10px] text-amber-600">Can overwrite</span>
+                  </div>
+                }
+              }
+
+            </div>
+
+            <!-- Collecting Amount Input Field -->
+            <div class="space-y-1">
+              <div class="flex items-center justify-between">
+                <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Collecting Amount (Rs.)</label>
+                @if (selectedUserArrearsInfo(); as arr) {
+                  <span class="text-[10px] font-semibold text-slate-400">Total: Rs. {{ arr.totalDue }}</span>
+                }
+              </div>
+              
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs font-bold">
+                  Rs.
+                </div>
+                <input 
+                  type="number" 
+                  [ngModel]="paidAmount()" 
+                  (ngModelChange)="paidAmount.set(+$event)" 
+                  class="w-full py-2 pl-9 pr-3 text-sm sm:text-base font-black border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              </div>
+
+              <!-- Quick Amount & Arrears Chips -->
+              <div class="flex flex-wrap items-center gap-1 pt-0.5">
+                @if (selectedUserArrearsInfo(); as arr) {
+                  @if (arr.previousArrears > 0) {
+                    <button 
+                      type="button" 
+                      (click)="setQuickAmount(arr.totalDue)" 
+                      class="px-2 py-0.5 text-[10px] font-black bg-rose-600 text-white rounded-md hover:bg-rose-700 transition-colors shadow-xs">
+                      Total with Arrears (Rs. {{ arr.totalDue }})
+                    </button>
+                  }
+                  <button 
+                    type="button" 
+                    (click)="setQuickAmount(user.monthlyBill)" 
+                    class="px-2 py-0.5 text-[10px] font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 rounded-md hover:bg-indigo-200 transition-colors">
+                    Current Bill (Rs. {{ user.monthlyBill }})
+                  </button>
+                }
+                <button 
+                  type="button" 
+                  (click)="setQuickAmount(500)" 
+                  class="px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded hover:bg-slate-200">
+                  500
+                </button>
+                <button 
+                  type="button" 
+                  (click)="setQuickAmount(1000)" 
+                  class="px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded hover:bg-slate-200">
+                  1,000
+                </button>
+                <button 
+                  type="button" 
+                  (click)="setQuickAmount(1500)" 
+                  class="px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded hover:bg-slate-200">
+                  1,500
+                </button>
+                <button 
+                  type="button" 
+                  (click)="setQuickAmount(2000)" 
+                  class="px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded hover:bg-slate-200">
+                  2,000
+                </button>
+              </div>
+            </div>
+
+            <!-- Form Action Buttons (Single Compact Row) -->
+            <div class="flex items-center gap-1.5 pt-1">
+              <button 
+                type="button" 
+                (click)="resetForm()" 
+                class="px-2.5 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 transition-colors">
+                Cancel
+              </button>
+
+              <button 
+                (click)="recordPayment(false)" 
+                class="flex-1 py-2 px-3 text-xs font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center space-x-1.5 tap-active">
+                <i class="fas fa-check-circle text-xs"></i>
+                <span>Save Payment</span>
+              </button>
+
+              @if (user.phone) {
+                <button 
+                  (click)="recordPayment(true)" 
+                  class="flex-1 py-2 px-3 text-xs font-bold text-white bg-teal-600 rounded-xl hover:bg-teal-700 transition-colors shadow-sm flex items-center justify-center space-x-1.5 tap-active"
+                  title="Save payment and send WhatsApp receipt">
+                  <i class="fab fa-whatsapp text-sm"></i>
+                  <span>Save & WhatsApp</span>
+                </button>
+              }
+            </div>
+
+          </div>
+        } @else {
+          <!-- Empty Search State Placeholder -->
+          <div class="p-4 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center text-slate-400">
+            <i class="fas fa-user-check text-xl mb-1 text-slate-300 dark:text-slate-700"></i>
+            <p class="text-[11px] font-medium">Type a subscriber name above or click "Collect" from the list to record payment.</p>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ================= RIGHT: PENDING BILLS & PAID HISTORY (EXPANDED) ================= -->
+    <div class="lg:col-span-7 xl:col-span-8 space-y-3">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+        
+        <!-- Header, Tabs & Search -->
+        <div class="p-3 sm:p-4 border-b border-slate-100 dark:border-slate-800 space-y-2.5">
+          <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2.5">
+            
+            <!-- Tab Switcher -->
+            <div class="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+              <button 
+                type="button" 
+                (click)="activeTab.set('unpaid')" 
+                class="px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5"
+                [class]="activeTab() === 'unpaid' ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'">
+                <i class="fas fa-clock text-[10px]"></i>
+                <span>Pending Bills</span>
+                <span class="px-1.5 py-0.2 text-[10px] rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">
+                  {{ displayedBillEntries().length }}
+                </span>
+              </button>
+
+              <button 
+                type="button" 
+                (click)="activeTab.set('paid')" 
+                class="px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center space-x-1.5"
+                [class]="activeTab() === 'paid' ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'">
+                <i class="fas fa-check-circle text-[10px]"></i>
+                <span>Paid History & Edit</span>
+                <span class="px-1.5 py-0.2 text-[10px] rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                  {{ paidBillEntries().length }}
+                </span>
+              </button>
+            </div>
+
+            <!-- Search Filter -->
+            <div class="relative w-full sm:w-52">
+              <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                <i class="fas fa-search text-xs"></i>
+              </div>
+              <input 
+                type="text" 
+                [ngModel]="tableSearchTerm()" 
+                (ngModelChange)="tableSearchTerm.set($event)" 
+                [placeholder]="activeTab() === 'unpaid' ? 'Filter pending bills...' : 'Filter paid entries...'" 
+                class="w-full py-1.5 pl-8 pr-3 text-xs border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ================= TAB 1: PENDING BILLS LIST ================= -->
+        @if (activeTab() === 'unpaid') {
+          
+          <!-- MOBILE VIEW: COMPACT TOUCH CARDS (md:hidden) -->
+          <div class="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+            @for(entry of filteredDisplayedBillEntries(); track entry.id; let i = $index) {
+              <div class="p-3 space-y-2 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex items-center space-x-2">
+                    <div class="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 font-black flex items-center justify-center text-xs shrink-0">
+                      {{ i + 1 }}
+                    </div>
+                    <div>
+                      <div class="flex items-center space-x-1.5">
+                        <h4 class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">{{ entry.userName }}</h4>
+                        @if (entry.userCategory) {
+                          <span class="px-1 py-0.2 rounded text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">{{ entry.userCategory }}</span>
+                        }
+                      </div>
+                      <p class="text-[10px] text-slate-400">{{ entry.userAddress }}</p>
+                    </div>
+                  </div>
+
+                  <span class="px-1.5 py-0.5 text-[9px] font-bold rounded-md shrink-0"
+                    [class]="entry.status === 'Not Paid' ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'">
+                    {{ entry.status }}
+                  </span>
+                </div>
+
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 text-xs">
+                  <div>
+                    <span class="text-[9px] text-slate-400 uppercase font-semibold">Bill: </span>
+                    <span class="font-bold text-slate-900 dark:text-white">Rs. {{ entry.billAmount }}</span>
+                  </div>
+                  <div>
+                    <span class="text-[9px] text-slate-400 uppercase font-semibold">Paid: </span>
+                    <span class="font-bold text-emerald-600">Rs. {{ entry.paidAmount }}</span>
+                  </div>
+                  <div>
+                    <span class="text-[9px] text-slate-400 uppercase font-semibold">Due: </span>
+                    <span class="font-bold text-rose-600">Rs. {{ entry.billAmount - entry.paidAmount }}</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-end space-x-1.5 pt-0.5">
+                  @if (entry.userPhone) {
+                    <button 
+                      (click)="sendWhatsAppReminder(entry)" 
+                      class="p-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 rounded-lg hover:bg-emerald-100 border border-emerald-200/60 dark:border-emerald-800/60 tap-active" 
+                      title="Send WhatsApp Bill Reminder">
+                      <i class="fab fa-whatsapp text-sm"></i>
+                    </button>
+                    <a [href]="'tel:' + entry.userPhone" class="p-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 rounded-lg hover:bg-emerald-100 border border-emerald-200/60 dark:border-emerald-800/60 tap-active" title="Direct Phone Call">
+                      <i class="fas fa-phone-alt"></i>
+                    </a>
+                  }
+                  <button 
+                    (click)="collectPaymentFromTable(entry)" 
+                    class="px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-xs flex items-center space-x-1 tap-active">
+                    <i class="fas fa-hand-holding-usd text-[11px]"></i>
+                    <span>Collect Now</span>
+                  </button>
+                </div>
+              </div>
+            } @empty {
+              <div class="p-6 text-center text-slate-400">
+                <i class="fas fa-check-circle text-2xl text-emerald-500 mb-1.5 block"></i>
+                <p class="text-xs font-bold text-slate-700 dark:text-slate-300">All bills collected!</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">No pending bills found for {{ months[selectedMonth()-1].name }} {{ selectedYear() }}.</p>
+              </div>
+            }
+          </div>
+
+          <!-- DESKTOP VIEW: FULL TABLE (hidden md:block) -->
+          <div class="hidden md:block overflow-x-auto">
+            <table class="w-full text-xs sm:text-sm text-left text-slate-600 dark:text-slate-300">
+              <thead class="text-[10px] sm:text-xs uppercase bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th scope="col" class="px-4 py-3 font-bold">#</th>
+                  <th scope="col" class="px-4 py-3 font-bold">Customer</th>
+                  <th scope="col" class="px-4 py-3 font-bold">Address</th>
+                  <th scope="col" class="px-4 py-3 font-bold text-right">Bill</th>
+                  <th scope="col" class="px-4 py-3 font-bold text-right">Paid</th>
+                  <th scope="col" class="px-4 py-3 font-bold text-center">Status</th>
+                  <th scope="col" class="px-4 py-3 font-bold text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                @for (entry of filteredDisplayedBillEntries(); track entry.id; let i = $index) {
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <td class="px-4 py-2.5 font-medium text-slate-400">{{ i + 1 }}</td>
+                    <td class="px-4 py-2.5 font-bold text-slate-900 dark:text-white">
+                      <div class="flex items-center space-x-1.5">
+                        <span>{{ entry.userName }}</span>
+                        @if (entry.userCategory) {
+                          <span class="px-1 py-0.2 rounded text-[9px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                            {{ entry.userCategory }}
+                          </span>
+                        }
+                      </div>
+                    </td>
+                    <td class="px-4 py-2.5 text-slate-500 dark:text-slate-400 text-xs">{{ entry.userAddress }}</td>
+                    <td class="px-4 py-2.5 text-right font-semibold text-slate-900 dark:text-white">Rs. {{ entry.billAmount }}</td>
+                    <td class="px-4 py-2.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">Rs. {{ entry.paidAmount }}</td>
+                    <td class="px-4 py-2.5 text-center">
+                      <span class="px-2 py-0.5 text-[10px] font-bold rounded-md inline-block" 
+                        [class]="entry.status === 'Not Paid' ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'">
+                        {{ entry.status }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-2.5 text-center">
+                      <div class="flex items-center justify-center space-x-1.5">
+                        @if (entry.userPhone) {
+                          <button 
+                            (click)="sendWhatsAppReminder(entry)" 
+                            title="Send WhatsApp Bill Reminder" 
+                            class="p-1 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-950">
+                            <i class="fab fa-whatsapp text-base"></i>
+                          </button>
+                          <a [href]="'tel:' + entry.userPhone" title="Direct Phone Call" class="p-1 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-950">
+                            <i class="fas fa-phone-alt text-xs"></i>
+                          </a>
+                        }
+                        <button 
+                          (click)="collectPaymentFromTable(entry)" 
+                          title="Collect Bill" 
+                          class="px-2.5 py-1 text-xs font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-1">
+                          <i class="fas fa-hand-holding-usd text-[10px]"></i>
+                          <span>Collect</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="7" class="px-4 py-6 text-center text-slate-400 text-xs">
+                      <i class="fas fa-check-circle text-2xl text-emerald-500 mb-1.5 block"></i>
+                      No pending bills found for the selected month.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
+        <!-- ================= TAB 2: PAID HISTORY & CORRECTION / EDIT ================= -->
+        @if (activeTab() === 'paid') {
+          
+          <!-- MOBILE VIEW: PAID CARDS (md:hidden) -->
+          <div class="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+            @for(entry of filteredPaidBillEntries(); track entry.id; let i = $index) {
+              <div class="p-3 space-y-2 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex items-center space-x-2">
+                    <div class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 font-black flex items-center justify-center text-xs shrink-0">
+                      <i class="fas fa-check"></i>
+                    </div>
+                    <div>
+                      <h4 class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">{{ entry.userName }}</h4>
+                      <p class="text-[10px] text-slate-400">
+                        Paid on: {{ (entry.paymentDate | date:'mediumDate') || 'N/A' }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <span class="px-2 py-0.5 text-[10px] font-bold rounded-md shrink-0 bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                    Paid Rs. {{ entry.paidAmount }}
+                  </span>
+                </div>
+
+                <div class="flex items-center justify-end space-x-2 pt-0.5">
+                  @if (entry.userPhone) {
+                    <button 
+                      (click)="sendWhatsAppReceipt(entry, entry.paidAmount, entry.status)" 
+                      class="px-2.5 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/60 dark:border-emerald-800 rounded-lg hover:bg-emerald-100 transition-colors flex items-center space-x-1"
+                      title="Send WhatsApp Receipt">
+                      <i class="fab fa-whatsapp text-sm"></i>
+                      <span>Receipt</span>
+                    </button>
+                  }
+                  <button 
+                    (click)="openEditModal(entry)" 
+                    class="px-2.5 py-1 text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/60 dark:border-indigo-800 rounded-lg hover:bg-indigo-100 transition-colors flex items-center space-x-1">
+                    <i class="fas fa-edit text-[10px]"></i>
+                    <span>Edit / Correct Entry</span>
+                  </button>
+                </div>
+              </div>
+            } @empty {
+              <div class="p-6 text-center text-slate-400">
+                <i class="fas fa-receipt text-2xl mb-1.5 text-slate-300 dark:text-slate-700 block"></i>
+                <p class="text-xs font-bold text-slate-700 dark:text-slate-300">No collected payments recorded yet.</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">Payments collected for {{ months[selectedMonth()-1].name }} {{ selectedYear() }} will appear here.</p>
+              </div>
+            }
+          </div>
+
+          <!-- DESKTOP VIEW: PAID TABLE (hidden md:block) -->
+          <div class="hidden md:block overflow-x-auto">
+            <table class="w-full text-xs sm:text-sm text-left text-slate-600 dark:text-slate-300">
+              <thead class="text-[10px] sm:text-xs uppercase bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th scope="col" class="px-4 py-3 font-bold">#</th>
+                  <th scope="col" class="px-4 py-3 font-bold">Customer</th>
+                  <th scope="col" class="px-4 py-3 font-bold">Payment Date</th>
+                  <th scope="col" class="px-4 py-3 font-bold text-right">Bill Total</th>
+                  <th scope="col" class="px-4 py-3 font-bold text-right">Collected Amount</th>
+                  <th scope="col" class="px-4 py-3 font-bold text-center">Status</th>
+                  <th scope="col" class="px-4 py-3 font-bold text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                @for (entry of filteredPaidBillEntries(); track entry.id; let i = $index) {
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <td class="px-4 py-2.5 font-medium text-slate-400">{{ i + 1 }}</td>
+                    <td class="px-4 py-2.5 font-bold text-slate-900 dark:text-white">
+                      <div class="flex items-center space-x-1.5">
+                        <span>{{ entry.userName }}</span>
+                        @if (entry.userCategory) {
+                          <span class="px-1 py-0.2 rounded text-[9px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                            {{ entry.userCategory }}
+                          </span>
+                        }
+                      </div>
+                      <p class="text-[10px] font-normal text-slate-400">{{ entry.userAddress }}</p>
+                    </td>
+                    <td class="px-4 py-2.5 text-slate-600 dark:text-slate-300 text-xs">
+                      {{ (entry.paymentDate | date:'mediumDate') || '-' }}
+                    </td>
+                    <td class="px-4 py-2.5 text-right font-semibold text-slate-700 dark:text-slate-300">Rs. {{ entry.billAmount }}</td>
+                    <td class="px-4 py-2.5 text-right font-black text-emerald-600 dark:text-emerald-400">Rs. {{ entry.paidAmount }}</td>
+                    <td class="px-4 py-2.5 text-center">
+                      <span class="px-2 py-0.5 text-[10px] font-bold rounded-md inline-block bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                        {{ entry.status }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-2.5 text-center">
+                      <div class="flex items-center justify-center space-x-1.5">
+                        @if (entry.userPhone) {
+                          <button 
+                            (click)="sendWhatsAppReceipt(entry, entry.paidAmount, entry.status)" 
+                            title="Send WhatsApp Receipt" 
+                            class="p-1 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-950">
+                            <i class="fab fa-whatsapp text-base"></i>
+                          </button>
+                        }
+                        <button 
+                          (click)="openEditModal(entry)" 
+                          title="Edit & Correct this payment entry" 
+                          class="px-2.5 py-1 text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/60 dark:border-indigo-800 rounded-lg hover:bg-indigo-100 transition-colors flex items-center space-x-1">
+                          <i class="fas fa-edit text-[10px]"></i>
+                          <span>Edit / Correct</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="7" class="px-4 py-6 text-center text-slate-400 text-xs">
+                      <i class="fas fa-receipt text-2xl mb-1.5 text-slate-300 dark:text-slate-700 block"></i>
+                      No collected payments recorded for this month yet.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= EDIT & CORRECT PAYMENT ENTRY MODAL ================= -->
+  @if (isEditModalOpen();) {
+    @if (editingEntry(); as entry) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3.5 animate-fadeIn">
+        <div class="w-full max-w-md p-5 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 space-y-3.5">
+          
+          <div class="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center space-x-2">
+              <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm">
+                <i class="fas fa-edit"></i>
+              </div>
+              <div>
+                <h3 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white">Edit / Correct Payment Entry</h3>
+                <p class="text-[10px] text-slate-400">{{ entry.userName }} ({{ months[entry.month - 1].name }} {{ entry.year }})</p>
+              </div>
+            </div>
+
+            <button (click)="closeEditModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+              <i class="fas fa-times text-sm"></i>
+            </button>
+          </div>
+
+          <!-- Warning Notice -->
+          <div class="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200/80 dark:border-amber-900/60 text-xs text-amber-800 dark:text-amber-300 space-y-0.5">
+            <div class="flex items-center space-x-1.5 font-bold text-amber-900 dark:text-amber-200">
+              <i class="fas fa-exclamation-triangle text-amber-600 text-xs"></i>
+              <span>Ledger Correction Notice</span>
+            </div>
+            <p class="text-[11px] leading-relaxed">
+              Updating this entry will adjust the customer's payment statement and cash ledger.
+            </p>
+          </div>
+
+          <!-- Entry Details Grid -->
+          <div class="grid grid-cols-2 gap-2.5 p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-xs">
+            <div>
+              <span class="text-[9px] uppercase font-bold text-slate-400 block">Monthly Bill</span>
+              <span class="font-black text-slate-900 dark:text-white text-sm">Rs. {{ entry.billAmount }}</span>
+            </div>
+            <div>
+              <span class="text-[9px] uppercase font-bold text-slate-400 block">Recorded Paid</span>
+              <span class="font-black text-emerald-600 text-sm">Rs. {{ entry.paidAmount }}</span>
+            </div>
+          </div>
+
+          <!-- Edit Amount Input -->
+          <div>
+            <label class="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+              Correct Paid Amount (Rs.)
+            </label>
+            <input 
+              type="number" 
+              [ngModel]="editAmount()" 
+              (ngModelChange)="editAmount.set(+$event)" 
+              placeholder="Enter corrected amount..." 
+              class="w-full p-2.5 text-sm sm:text-base font-bold border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+
+          <!-- Edit Date Input -->
+          <div>
+            <label class="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+              Payment Date
+            </label>
+            <input 
+              type="date" 
+              [ngModel]="editPaymentDate()" 
+              (ngModelChange)="editPaymentDate.set($event)" 
+              class="w-full p-2 text-xs md:text-sm font-semibold border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex items-center justify-between gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+            <button 
+              type="button" 
+              (click)="resetEntryToUnpaid(entry)" 
+              class="px-3 py-2 text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 dark:bg-rose-950/60 rounded-xl border border-rose-200 dark:border-rose-900/80 transition-colors flex items-center justify-center space-x-1"
+              title="Cancel payment and reset this bill to Unpaid">
+              <i class="fas fa-trash-alt text-[10px]"></i>
+              <span>Reset to Unpaid</span>
+            </button>
+
+            <div class="flex items-center space-x-1.5">
+              <button 
+                type="button" 
+                (click)="closeEditModal()" 
+                class="px-3 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 transition-colors">
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                (click)="saveEditedEntry()" 
+                class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm transition-colors flex items-center justify-center space-x-1">
+                <i class="fas fa-check text-[10px]"></i>
+                <span>Update</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    }
+  }
+
+</div>
